@@ -1,5 +1,5 @@
 # Cidadela
-Um Site webserice com node.js  
+Um site WebService com node.js  
 
 Pequeno web portal  
 
