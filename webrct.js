@@ -2,7 +2,7 @@ const chat = document.getElementById('chat');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
 
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket(`wss://${window.location.host}`);
 
         const pc = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
