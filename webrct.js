@@ -1,48 +1,89 @@
-let pc = new RTCPeerConnection();
-let channel;
-let chatBox = document.getElementById('chat');
+const chat = document.getElementById('chat');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
 
-pc.ondatachannel = e => {
-    channel = e.channel;
-    channel.onmessage = e => {
-        chatBox.textContent += "Outro: " + e.data + "\n";
-        chatBox.scrollTop = chatBox.scrollHeight;
-    };
-};
+        const ws = new WebSocket('ws://localhost:8080');
 
-function createOffer() {
-    channel = pc.createDataChannel("chat");
-    channel.onmessage = e => {
-        chatBox.textContent += "Outro: " + e.data + "\n";
-        chatBox.scrollTop = chatBox.scrollHeight;
-    };
-    pc.createOffer().then(offer => {
-        pc.setLocalDescription(offer);
-        document.getElementById('localSDP').value = JSON.stringify(offer);
-    });
-}
+        const pc = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        });
 
-function createAnswer() {
-    let remote = JSON.parse(document.getElementById('remoteSDP').value);
-    pc.setRemoteDescription(new RTCSessionDescription(remote)).then(() => {
-        return pc.createAnswer();
-    }).then(answer => {
-        pc.setLocalDescription(answer);
-        document.getElementById('localSDP').value = JSON.stringify(answer);
-    });
-}
+        let dataChannel;
 
-document.getElementById('remoteSDP').addEventListener('input', () => {
-    let remote = JSON.parse(document.getElementById('remoteSDP').value);
-    pc.setRemoteDescription(new RTCSessionDescription(remote));
-});
+        ws.onopen = () => {
+            log('Conectado ao servidor de sinalização.');
+        };
 
-function sendMessage() {
-    const msg = document.getElementById('msgInput').value;
-    if (channel && msg) {
-        channel.send(msg);
-        chatBox.textContent += "Você: " + msg + "\n";
-        chatBox.scrollTop = chatBox.scrollHeight;
-        document.getElementById('msgInput').value = "";
-    }
-}
+        ws.onmessage = async (event) => {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'offer') {
+                await pc.setRemoteDescription(new RTCSessionDescription(message));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                ws.send(JSON.stringify(pc.localDescription));
+            } else if (message.type === 'answer') {
+                await pc.setRemoteDescription(new RTCSessionDescription(message));
+            } else if (message.type === 'candidate') {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+                } catch (e) {
+                    console.error('Erro ao adicionar ICE candidate:', e);
+                }
+            }
+        };
+
+        pc.onicecandidate = event => {
+            if (event.candidate) {
+                ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+            }
+        };
+
+        pc.ondatachannel = event => {
+            dataChannel = event.channel;
+            setupDataChannel();
+        };
+
+        function setupDataChannel() {
+            dataChannel.onopen = () => {
+                log('Canal de dados aberto! Pode enviar mensagens.');
+                sendBtn.disabled = false;
+                msgInput.focus();
+            };
+            dataChannel.onmessage = event => {
+                log('Outro: ' + event.data);
+            };
+            dataChannel.onclose = () => {
+                log('Canal de dados fechado.');
+                sendBtn.disabled = true;
+            };
+        }
+
+        // Criar canal de dados e oferta quando o WebSocket abrir (primeiro cliente)
+        ws.onopen = () => {
+            if (!dataChannel) {
+                dataChannel = pc.createDataChannel('chat');
+                setupDataChannel();
+
+                pc.createOffer().then(offer => {
+                    return pc.setLocalDescription(offer);
+                }).then(() => {
+                    ws.send(JSON.stringify(pc.localDescription));
+                });
+            }
+        };
+
+        sendBtn.onclick = () => {
+            const msg = msgInput.value.trim();
+            if (msg && dataChannel && dataChannel.readyState === 'open') {
+                dataChannel.send(msg);
+                log('Você: ' + msg);
+                msgInput.value = '';
+                msgInput.focus();
+            }
+        };
+
+        function log(text) {
+            chat.textContent += text + '\n';
+            chat.scrollTop = chat.scrollHeight;
+        }

@@ -1,10 +1,12 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const WebSocket = require('ws');
 
 const hostname = '0.0.0.0';
 const port = process.env.PORT || 3000;
 
+// Cria servidor HTTP que serve arquivos estáticos
 const server = http.createServer((req, res) => {
   let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
@@ -37,6 +39,30 @@ const server = http.createServer((req, res) => {
       res.setHeader('Content-Type', contentType);
       res.end(content);
     }
+  });
+});
+
+// Integra WebSocket ao servidor HTTP
+const wss = new WebSocket.Server({ server });
+
+let clients = [];
+
+wss.on('connection', (ws) => {
+  clients.push(ws);
+  console.log('Cliente conectado. Total:', clients.length);
+
+  ws.on('message', (message) => {
+    // Broadcast para todos exceto quem enviou
+    clients.forEach(client => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  });
+
+  ws.on('close', () => {
+    clients = clients.filter(c => c !== ws);
+    console.log('Cliente desconectado. Total:', clients.length);
   });
 });
 
