@@ -3,12 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-const hostname = '0.0.0.0';
+// Usa porta do Railway ou 3000 localmente
 const port = process.env.PORT || 3000;
 
-// Cria servidor HTTP que serve arquivos estáticos
+// Cria servidor HTTP para servir os arquivos do frontend
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+  // Define qual arquivo servir
+  let filePath = path.join(__dirname, req.url === '/' ? 'portal.html' : req.url);
 
   // Protege contra diretórios inválidos
   if (filePath.includes('..')) {
@@ -17,7 +18,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Define tipo MIME baseado na extensão do arquivo
+  // Define tipo MIME
   const ext = path.extname(filePath);
   const contentType = {
     '.html': 'text/html',
@@ -42,17 +43,18 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// Integra WebSocket ao servidor HTTP
+// Cria servidor WebSocket sobre o HTTP
 const wss = new WebSocket.Server({ server });
 
 let clients = [];
 
 wss.on('connection', (ws) => {
   clients.push(ws);
-  console.log('Cliente conectado. Total:', clients.length);
+  console.log('🟢 Cliente conectado. Total:', clients.length);
 
   ws.on('message', (message) => {
-    // Broadcast para todos exceto quem enviou
+    console.log('📨 Mensagem:', message.toString());
+    // Envia para todos os outros clientes conectados
     clients.forEach(client => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(message);
@@ -62,10 +64,11 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     clients = clients.filter(c => c !== ws);
-    console.log('Cliente desconectado. Total:', clients.length);
+    console.log('🔴 Cliente desconectado. Total:', clients.length);
   });
 });
 
-server.listen(port, hostname, () => {
-  console.log(`Servidor rodando em http://${hostname}:${port}/`);
+// Inicia o servidor
+server.listen(port, () => {
+  console.log(`🌐 Servidor rodando na porta ${port}`);
 });
