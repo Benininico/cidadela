@@ -9,7 +9,7 @@ const port = process.env.PORT || 8443;
 // Cria servidor HTTP para servir os arquivos do frontend
 const server = http.createServer((req, res) => {
   // Define qual arquivo servir
-  let filePath = path.join(__dirname, req.url === '/' ? 'portal.html' : req.url);
+  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
   // Protege contra diretórios inválidos
   if (filePath.includes('..')) {
