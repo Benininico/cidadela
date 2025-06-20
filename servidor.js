@@ -3,18 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-// Porta para HTTPS
 const port = process.env.PORT || 666;
 
-// Carrega os arquivos do certificado da pasta acessível
 const options = {
   key: fs.readFileSync(path.join(__dirname, 'certs', 'privkey.pem')),
   cert: fs.readFileSync(path.join(__dirname, 'certs', 'fullchain.pem'))
 };
 
-// Cria servidor HTTPS para servir os arquivos do frontend
 const server = https.createServer(options, (req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+  let filePath = path.join(__dirname, req.url === '/' ? 'chat.html' : req.url);
 
   if (filePath.includes('..')) {
     res.statusCode = 400;
@@ -46,15 +43,13 @@ const server = https.createServer(options, (req, res) => {
   });
 });
 
-// Salas: { roomCode: Set of clients }
+// Salas { roomCode: Set of ws clients }
 const rooms = {};
 
 function isValidRoomCode(code) {
-  // Só letras, números, hífen e underline, de 1 até 64 caracteres
   return typeof code === 'string' && /^[\w-]{1,64}$/.test(code);
 }
 
-// Cria servidor WebSocket sobre o HTTPS
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
@@ -82,11 +77,16 @@ wss.on('connection', (ws) => {
       ws.room = room;
       if (!rooms[ws.room]) rooms[ws.room] = new Set();
       rooms[ws.room].add(ws);
+
+      // Envia quantos clients na sala (para controlar isCaller)
+      const clientsCount = rooms[ws.room].size;
+      ws.send(JSON.stringify({ type: 'clientsCount', count: clientsCount }));
+
       console.log(`Cliente entrou na sala ${ws.room}`);
       return;
     }
 
-    // Repassa mensagens signaling só para clientes na mesma sala
+    // Repassa mensagens signaling para clientes na mesma sala
     if (ws.room && rooms[ws.room]) {
       rooms[ws.room].forEach(client => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
