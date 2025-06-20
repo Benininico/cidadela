@@ -4,7 +4,7 @@ const path = require('path');
 const WebSocket = require('ws');
 
 // Usa porta do Railway ou 3000 localmente
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8443;
 
 // Cria servidor HTTP para servir os arquivos do frontend
 const server = http.createServer((req, res) => {
