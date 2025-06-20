@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Chat WebRTC Simples Seguro</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        #chat {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        #msg {
+            width: 80%;
+        }
+
+        #sendBtn {
+            width: 18%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Chat WebRTC</h2>
+
+    <label>
+        Código da sala:
+        <input type="text" id="roomInput" placeholder="Letras, números, - ou _ (max 64 chars)" maxlength="64" />
+    </label>
+    <button id="joinBtn">Entrar</button>
+
+    <div id="chat" style="display:none;"></div>
+
+    <input type="text" id="msg" placeholder="Digite sua mensagem..." disabled />
+    <button id="sendBtn" disabled>Enviar</button>
+
+    <script>
+        const wsUrl = location.origin.replace(/^http/, 'ws');
+        let ws, pc, dc;
+        let isCaller = true; // simplificado, todos criam offer
+        let room;
+
+        const chat = document.getElementById('chat');
+        const msgInput = document.getElementById('msg');
+        const sendBtn = document.getElementById('sendBtn');
+        const roomInput = document.getElementById('roomInput');
+        const joinBtn = document.getElementById('joinBtn');
+
+        function log(text) {
+            const p = document.createElement('p');
+            p.textContent = text;
+            chat.appendChild(p);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        joinBtn.onclick = () => {
+            let input = roomInput.value.trim();
+
+            if (input.length === 0) {
+                alert('Digite um código de sala.');
+                return;
+            }
+            if (input.length > 64) {
+                alert('Código da sala deve ter no máximo 64 caracteres.');
+                return;
+            }
+            if (!/^[\w-]{1,64}$/.test(input)) {
+                alert('Código da sala só pode conter letras, números, hífen e underline.');
+                return;
+            }
+
+            room = input;
+            joinBtn.disabled = true;
+            roomInput.disabled = true;
+            start();
+        };
+
+        function start() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'join', room }));
+                log('Conectado ao servidor de signaling na sala: ' + room);
+                createPeerConnection();
+                if (isCaller) {
+                    createOffer();
+                }
+            };
+
+            ws.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'error') {
+                    alert('Erro do servidor: ' + data.message);
+                    return;
+                }
+
+                if (data.type === 'offer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    ws.send(JSON.stringify({ type: 'answer', answer, room }));
+                }
+                else if (data.type === 'answer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+                }
+                else if (data.type === 'candidate') {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    } catch (e) {
+                        console.error('Erro ao adicionar candidato ICE', e);
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                log('Conexão com signaling fechada');
+                msgInput.disabled = true;
+                sendBtn.disabled = true;
+            };
+        }
+
+        function createPeerConnection() {
+            pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate, room }));
+                }
+            };
+
+            pc.ondatachannel = (event) => {
+                dc = event.channel;
+                setupDataChannel();
+            };
+        }
+
+        function createOffer() {
+            dc = pc.createDataChannel('chat');
+            setupDataChannel();
+
+            pc.createOffer().then(offer => {
+                pc.setLocalDescription(offer);
+                ws.send(JSON.stringify({ type: 'offer', offer, room }));
+            });
+        }
+
+        function setupDataChannel() {
+            dc.onopen = () => {
+                log('Conexão do chat aberta');
+                chat.style.display = 'block';
+                msgInput.disabled = false;
+                sendBtn.disabled = false;
+                msgInput.focus();
+            };
+            dc.onmessage = (event) => {
+                log('Parceiro: ' + event.data);
+            };
+            dc.onclose = () => {
+                log('Conexão do chat fechada');
+                msgInput.disabled = true;
+                sendBtn.disabled = true;
+            };
+        }
+
+        sendBtn.onclick = () => {
+            const text = msgInput.value.trim();
+            if (text && dc && dc.readyState === 'open') {
+                dc.send(text);
+                log('Você: ' + text);
+                msgInput.value = '';
+            }
+        };
+
+    </script>
+
+</body>
+
+</html>

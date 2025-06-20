@@ -46,31 +46,67 @@ const server = https.createServer(options, (req, res) => {
   });
 });
 
+// Salas: { roomCode: Set of clients }
+const rooms = {};
+
+function isValidRoomCode(code) {
+  // Só letras, números, hífen e underline, de 1 até 64 caracteres
+  return typeof code === 'string' && /^[\w-]{1,64}$/.test(code);
+}
+
 // Cria servidor WebSocket sobre o HTTPS
 const wss = new WebSocket.Server({ server });
 
-let clients = [];
-
 wss.on('connection', (ws) => {
-  clients.push(ws);
-  console.log('🟢 Cliente conectado. Total:', clients.length);
+  ws.room = null;
 
   ws.on('message', (message) => {
-    console.log('📨 Mensagem:', message.toString());
-    clients.forEach(client => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
+    let data;
+    try {
+      data = JSON.parse(message);
+    } catch (e) {
+      ws.send(JSON.stringify({ type: 'error', message: 'JSON inválido.' }));
+      return;
+    }
+
+    if (data.type === 'join') {
+      const room = data.room;
+      if (!isValidRoomCode(room)) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Código de sala inválido. Use só letras, números, - e _ (até 64 chars).' }));
+        return;
       }
-    });
+      if (ws.room) {
+        rooms[ws.room].delete(ws);
+        if (rooms[ws.room].size === 0) delete rooms[ws.room];
+      }
+      ws.room = room;
+      if (!rooms[ws.room]) rooms[ws.room] = new Set();
+      rooms[ws.room].add(ws);
+      console.log(`Cliente entrou na sala ${ws.room}`);
+      return;
+    }
+
+    // Repassa mensagens signaling só para clientes na mesma sala
+    if (ws.room && rooms[ws.room]) {
+      rooms[ws.room].forEach(client => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(message);
+        }
+      });
+    }
   });
 
   ws.on('close', () => {
-    clients = clients.filter(c => c !== ws);
-    console.log('🔴 Cliente desconectado. Total:', clients.length);
+    if (ws.room && rooms[ws.room]) {
+      rooms[ws.room].delete(ws);
+      if (rooms[ws.room].size === 0) {
+        delete rooms[ws.room];
+      }
+      console.log(`Cliente saiu da sala ${ws.room}`);
+    }
   });
 });
 
-// Inicia o servidor HTTPS
 server.listen(port, () => {
   console.log(`🌐 Servidor HTTPS rodando na porta ${port}`);
 });
