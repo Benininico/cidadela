@@ -74,7 +74,7 @@ wss.on('connection', (ws, req) => {
 
     if (data.type === 'join' && typeof data.room === 'string') {
       ws.room = data.room.slice(0, 64); // proteção: máximo 64 caracteres
-      console.log(`${hora()}: 🚪 Cliente com IP ${ws.userIP} entrou na sala ${ws.room}`);
+      console.log(`${hora()}: 🚪 Cliente com IP: ${ws.userIP} entrou na sala: ${ws.room}`);
 
       const sameRoomClients = clients.filter(c => c.room === ws.room);
       ws.send(JSON.stringify({ type: 'clientsCount', count: sameRoomClients.length }));
@@ -91,11 +91,11 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     clients = clients.filter(c => c !== ws);
-    console.log(`${hora()}: 🔴 Cliente com IP ${ws.userIP} saiu da sala ${ws.room || 'desconhecida'}`);
+    console.log(`${hora()}: 🔴 Cliente com IP: ${ws.userIP} saiu da sala: ${ws.room || 'desconhecida'}`);
   });
 });
 
 // Inicia o servidor
 server.listen(port, () => {
-  console.log(`${hora()}: 🌐 Servidor HTTPS rodando na porta ${port}`);
+  console.log(`${hora()}: 🌐 Servidor HTTPS rodando na porta: ${port}`);
 });
