@@ -10,7 +10,8 @@ function hora() {
 }
 
 // HTTPS com certificado
-const port = process.env.PORT || 666;
+const port = parseInt(process.argv[2], 10) || process.env.PORT || 666;
+
 const options = {
   key: fs.readFileSync(path.join(__dirname, 'certs', 'privkey.pem')),
   cert: fs.readFileSync(path.join(__dirname, 'certs', 'fullchain.pem'))
@@ -18,7 +19,7 @@ const options = {
 
 // Servidor HTTPS para arquivos estáticos
 const server = https.createServer(options, (req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'chat.html' : req.url);
+  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
   // segurança: evita path traversal
   if (filePath.includes('..')) {

@@ -1,154 +1,195 @@
-  * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-  }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-  .font1 {
-      font-family: "Space Mono", monospace;
-      font-weight: 400;
-      font-style: normal;
-  }
+.font1 {
+    font-family: "Space Mono", monospace;
+    font-weight: 400;
+    font-style: normal;
+}
 
-  .font2 {
-      font-family: "Meie Script", cursive;
-      font-weight: 400;
-      font-style: normal;
-  }
+.font2 {
+    font-family: "Meie Script", cursive;
+    font-weight: 400;
+    font-style: normal;
+}
 
-  body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: #000;
-      background-image: url('background.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-      overflow-x: hidden;
-      padding: 1rem;
-  }
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #000;
+    background-image: url('background.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    overflow: hidden;
+    padding: 1rem;
+}
 
-  h1 {
-      color: #0000;
-      font-size: 4rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 0 0 8px #c80000;
-      user-select: none;
-  }
+h1 {
+    color: #0000;
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 8px #c80000;
+    user-select: none;
+    text-align: center;
+}
 
-  p {
-      font-size: 1.5rem;
-      color: #c80000;
-      text-align: center;
-      max-width: 90%;
-      user-select: none;
-  }
+p {
+    font-size: 1.5rem;
+    color: #c80000;
+    text-align: center;
+    max-width: 90%;
+    user-select: none;
+}
 
-  .portal {
-      min-height: 100vh;
-      width: 60%;
-      background-color: #000000c8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-  }
+.portal {
+    min-height: 100vh;
+    width: 60%;
+    background-color: #000000c8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-  .container {
-      text-align: center;
-      padding: 2rem;
-      border: 2px solid #000;
-      border-radius: 10px;
-      box-shadow: 0 0 40px #000;
-      background-color: #000000e8;
-      width: 90%;
-      max-width: 600px;
-  }
+.container {
+    text-align: center;
+    padding: 2rem;
+    border: 2px solid #000;
+    border-radius: 10px;
+    box-shadow: 0 0 40px #000;
+    background-color: #000000e8;
+    width: 90%;
+    max-width: 600px;
+}
 
-  #chat {
-      border: 1px solid #444;
-      padding: 10px;
-      height: 250px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      background: #111;
-      margin-bottom: 1rem;
-      font-family: "Space Mono", monospace;
-      user-select: text;
-      font-size: 0.9rem
-  }
+#chat {
+    border: 1px solid #444;
+    padding: 10px;
+    height: 250px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    background: #111;
+    margin-bottom: 1rem;
+    font-family: "Space Mono", monospace;
+    user-select: text;
+    font-size: 0.9rem;
+}
 
-  .chat-message {
-      text-align: left;
-      color: white;
-      font-size: 0.9rem;
-      margin-bottom: 0.3rem;
-  }
+.chat-message {
+    text-align: left;
+    color: white;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
 
+input[type="text"],
+button {
+    resize: none;
+    color: white;
+    width: 100%;
+    margin: 0.5rem 0;
+    background: #111;
+    border: 1px solid #333;
+    padding: 12px 15px;
+    font-family: "Space Mono", monospace;
+    font-size: 1.05rem;
+    border-radius: 5px;
+    transition: border-color 0.3s;
+}
 
-  input[type="text"],
-  button {
-      resize: none;
-      color: white;
-      width: 100%;
-      margin: 0.5rem 0;
-      background: #111;
-      border: 1px solid #333;
-      padding: 12px 15px;
-      font-family: "Space Mono", monospace;
-      font-size: 1.1rem;
-      border-radius: 5px;
-      transition: border-color 0.3s;
-  }
+input[type="text"]:focus {
+    outline: none;
+    border-color: #c80000;
+}
 
-  input[type="text"]:focus {
-      outline: none;
-      border-color: #c80000;
-  }
+label {
+    color: #c80000;
+}
 
-  label {
-      color: #c80000;
-  }
+button {
+    background: #c80000;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: 600;
+}
 
-  button {
-      background: #c80000;
-      border: none;
-      cursor: pointer;
-      transition: background 0.3s;
-      font-weight: 600;
-  }
+button:hover:not(:disabled) {
+    background: #a00000;
+}
 
-  button:hover:not(:disabled) {
-      background: #a00000;
-  }
+button:disabled {
+    background: #400000;
+    cursor: default;
+}
 
-  button:disabled {
-      background: #400000;
-      cursor: default;
-  }
+/* Responsivo */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    .portal {
+        width: 90%;
+    }
 
-  @media (max-width: 480px) {
-      h1 {
-          font-size: 2.5rem;
-      }
+    .container {
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+    }
 
-      p {
-          font-size: 1rem;
-      }
+    #chat {
+        height: 200px;
+        font-size: 0.85rem;
+        overflow-y: auto;
+    }
 
-      .container {
-          padding: 1rem;
-      }
+    input[type="text"],
+    button {
+        font-size: 1rem;
+        padding: 10px 12px;
+    }
 
-      #chat {
-          height: 180px;
-      }
+    h1 {
+        font-size: 3rem;
+    }
 
-      button,
-      input[type="text"] {
-          font-size: 1rem;
-          padding: 10px;
-      }
-  }
+    p {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 2.3rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #chat {
+        height: 160px;
+        font-size: 0.8rem;
+    }
+
+    button,
+    input[type="text"] {
+        font-size: 0.95rem;
+        padding: 8px 10px;
+    }
+
+    .portal {
+        width: 100%;
+        padding: 1rem;
+    }
+}
