@@ -14,7 +14,7 @@ const server = https.createServer(options, (req, res) => {
   const ip = req.socket.remoteAddress;
   console.log(`📥 Acesso HTTP do IP: ${ip} - URL: ${req.url}`);
 
-  let filePath = path.join(__dirname, req.url === '/' ? 'chat.html' : req.url);
+  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
   if (filePath.includes('..')) {
     res.statusCode = 400;

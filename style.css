@@ -75,11 +75,18 @@
       white-space: pre-wrap;
       background: #111;
       margin-bottom: 1rem;
-      color: #c80000;
       font-family: "Space Mono", monospace;
-      font-size: 1rem;
       user-select: text;
+      font-size: 0.9rem
   }
+
+  .chat-message {
+      text-align: left;
+      color: white;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+  }
+
 
   input[type="text"],
   button {
@@ -102,7 +109,7 @@
   }
 
   label {
-    color: #c80000;
+      color: #c80000;
   }
 
   button {
