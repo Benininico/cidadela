@@ -11,6 +11,9 @@ const options = {
 };
 
 const server = https.createServer(options, (req, res) => {
+  const ip = req.socket.remoteAddress;
+  console.log(`📥 Acesso HTTP do IP: ${ip} - URL: ${req.url}`);
+
   let filePath = path.join(__dirname, req.url === '/' ? 'chat.html' : req.url);
 
   if (filePath.includes('..')) {
@@ -52,8 +55,11 @@ function isValidRoomCode(code) {
 
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  const ip = req.socket.remoteAddress;
+  ws.userIP = ip;
   ws.room = null;
+  console.log(`🟢 Cliente conectado com IP: ${ip}`);
 
   ws.on('message', (message) => {
     let data;
@@ -71,8 +77,10 @@ wss.on('connection', (ws) => {
         return;
       }
       if (ws.room) {
-        rooms[ws.room].delete(ws);
-        if (rooms[ws.room].size === 0) delete rooms[ws.room];
+        if (rooms[ws.room]) {
+          rooms[ws.room].delete(ws);
+          if (rooms[ws.room].size === 0) delete rooms[ws.room];
+        }
       }
       ws.room = room;
       if (!rooms[ws.room]) rooms[ws.room] = new Set();
@@ -82,7 +90,7 @@ wss.on('connection', (ws) => {
       const clientsCount = rooms[ws.room].size;
       ws.send(JSON.stringify({ type: 'clientsCount', count: clientsCount }));
 
-      console.log(`Cliente entrou na sala ${ws.room}`);
+      console.log(`Cliente com IP ${ws.userIP} entrou na sala ${ws.room}`);
       return;
     }
 
@@ -102,7 +110,9 @@ wss.on('connection', (ws) => {
       if (rooms[ws.room].size === 0) {
         delete rooms[ws.room];
       }
-      console.log(`Cliente saiu da sala ${ws.room}`);
+      console.log(`Cliente com IP ${ws.userIP} saiu da sala ${ws.room}`);
+    } else {
+      console.log(`Cliente com IP ${ws.userIP} desconectou (sem sala)`);
     }
   });
 });
