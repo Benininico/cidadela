@@ -1,4 +1,4 @@
-const https = require('https');     // Use HTTPS em vez de HTTP
+const https = require('https');    
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
@@ -6,10 +6,10 @@ const WebSocket = require('ws');
 // Porta para HTTPS
 const port = process.env.PORT || 666;
 
-// Carrega os arquivos do certificado
+// Carrega os arquivos do certificado da pasta acessível
 const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/cidadela.xyz/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/cidadela.xyz/fullchain.pem')
+  key: fs.readFileSync(path.join(__dirname, 'certs', 'privkey.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'certs', 'fullchain.pem'))
 };
 
 // Cria servidor HTTPS para servir os arquivos do frontend
