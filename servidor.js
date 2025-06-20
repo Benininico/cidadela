@@ -1,24 +1,27 @@
-const http = require('http');
+const https = require('https');     // Use HTTPS em vez de HTTP
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-// Usa porta do Railway ou 3000 localmente
-const port = process.env.PORT || 8443;
+// Porta para HTTPS
+const port = process.env.PORT || 666;
 
-// Cria servidor HTTP para servir os arquivos do frontend
-const server = http.createServer((req, res) => {
-  // Define qual arquivo servir
+// Carrega os arquivos do certificado
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/cidadela.xyz/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/cidadela.xyz/fullchain.pem')
+};
+
+// Cria servidor HTTPS para servir os arquivos do frontend
+const server = https.createServer(options, (req, res) => {
   let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
-  // Protege contra diretórios inválidos
   if (filePath.includes('..')) {
     res.statusCode = 400;
     res.end('Bad Request');
     return;
   }
 
-  // Define tipo MIME
   const ext = path.extname(filePath);
   const contentType = {
     '.html': 'text/html',
@@ -43,7 +46,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// Cria servidor WebSocket sobre o HTTP
+// Cria servidor WebSocket sobre o HTTPS
 const wss = new WebSocket.Server({ server });
 
 let clients = [];
@@ -54,7 +57,6 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     console.log('📨 Mensagem:', message.toString());
-    // Envia para todos os outros clientes conectados
     clients.forEach(client => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(message);
@@ -68,7 +70,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Inicia o servidor
+// Inicia o servidor HTTPS
 server.listen(port, () => {
-  console.log(`🌐 Servidor rodando na porta ${port}`);
+  console.log(`🌐 Servidor HTTPS rodando na porta ${port}`);
 });
