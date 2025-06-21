@@ -1,0 +1,14 @@
+{
+  "name": "cidadela",
+  "version": "1.0.0",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.13.0"
+  }
+}

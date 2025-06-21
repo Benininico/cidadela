@@ -3,28 +3,38 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-// Função para formatar hora
+// Função para hora
 function hora() {
   const agora = new Date();
   return agora.toTimeString().split(' ')[0].slice(0, 5);
 }
 
-// HTTPS com certificado
+// HTTPS com certificado seguro
 const port = parseInt(process.argv[2], 10) || process.env.PORT || 666;
 
 const options = {
-  key: fs.readFileSync(path.join(__dirname, 'certs', 'privkey.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'certs', 'fullchain.pem'))
+  key: fs.readFileSync(path.join(__dirname, 'private', 'certs', 'privkey.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'private', 'certs', 'fullchain.pem'))
 };
 
-// Servidor HTTPS para arquivos estáticos
-const server = https.createServer(options, (req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+// Notifica acesso a estas páginas
+const pagesToNotify = ['index.html', 'chat.html', 'portal.html'];
 
-  // segurança: evita path traversal
-  if (filePath.includes('..')) {
-    res.statusCode = 400;
-    res.end('Bad Request');
+// Servidor HTTPS
+const server = https.createServer(options, (req, res) => {
+  const ip = req.socket.remoteAddress;
+  const requested = req.url === '/' ? 'index.html' : req.url.replace(/^\//, '');
+  const filePath = path.join(__dirname, 'public', requested);
+
+  // Notifica acessos importantes
+  if (pagesToNotify.includes(requested)) {
+    console.log(`${hora()}: 🟢 Cliente acessou ${requested} com IP: ${ip}`);
+  }
+
+  // Proteção contra path traversal
+  if (filePath.includes('..') || filePath.includes('/private/')) {
+    res.statusCode = 403;
+    res.end('Acesso negado');
     return;
   }
 
@@ -52,7 +62,7 @@ const server = https.createServer(options, (req, res) => {
   });
 });
 
-// WebSocket sobre HTTPS
+// WebSocket
 const wss = new WebSocket.Server({ server });
 let clients = [];
 
@@ -67,15 +77,14 @@ wss.on('connection', (ws, req) => {
     let data;
     try {
       data = JSON.parse(msg.toString());
-    } catch (e) {
-      console.log(`${hora()}: ⚠️ Mensagem inválida recebida`);
+    } catch {
+      console.log(`${hora()}: ⚠️ Mensagem inválida`);
       return;
     }
 
     if (data.type === 'join' && typeof data.room === 'string') {
-      ws.room = data.room.slice(0, 64); // proteção: máximo 64 caracteres
+      ws.room = data.room.slice(0, 64);
       console.log(`${hora()}: 🚪 Cliente com IP: ${ws.userIP} entrou na sala: ${ws.room}`);
-
       const sameRoomClients = clients.filter(c => c.room === ws.room);
       ws.send(JSON.stringify({ type: 'clientsCount', count: sameRoomClients.length }));
     }
@@ -95,7 +104,6 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-// Inicia o servidor
 server.listen(port, () => {
-  console.log(`${hora()}: 🌐 Servidor HTTPS rodando na porta: ${port}`);
+  console.log(`${hora()}: 🌐 Servidor HTTPS rodando na porta ${port}`);
 });

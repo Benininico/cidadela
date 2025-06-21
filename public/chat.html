@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal: Chat WebRTC</title>
+    <script src="chat.js" defer></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Meie+Script&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+
+    <div class="container font1">
+        <h1>Chat WebRTC</h1>
+
+
+        <div id="chat" aria-live="polite" aria-atomic="true" role="log" style="display:none;"></div>
+
+        <input type="text" id="msg" placeholder="Digite sua mensagem..." disabled autocomplete="off"
+            aria-label="Mensagem para enviar" />
+        <button id="sendBtn" disabled class="font1">Enviar</button>
+
+
+
+        <label for="roomInput" class="font1" style="display:block; margin-bottom:0.5rem;">
+            Código da sala:
+        </label>
+        <input type="text" id="roomInput" placeholder="Letras, números, - ou _ (max 64 chars)" maxlength="64"
+            autocomplete="off" />
+        <button id="joinBtn" class="font1">Entrar</button>
+    </div>
+
+
+
+</body>
+
+</html>
