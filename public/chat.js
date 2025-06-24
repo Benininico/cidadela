@@ -1,41 +1,52 @@
 const wsUrl = location.origin.replace(/^http/, 'ws');
 let ws, pc, dc;
 let isCaller = false;
-let room;
+let room, username;
 
 const chat = document.getElementById('chat');
 const msgInput = document.getElementById('msg');
 const sendBtn = document.getElementById('sendBtn');
 const roomInput = document.getElementById('roomInput');
+const usernameInput = document.getElementById('usernameInput');
 const joinBtn = document.getElementById('joinBtn');
 
 function log(text) {
   const p = document.createElement('p');
-  p.classList.add('chat-message'); // para alinhar à esquerda via CSS
+  p.classList.add('chat-message');
   p.textContent = text;
   chat.appendChild(p);
   chat.scrollTop = chat.scrollHeight;
 }
 
 joinBtn.onclick = () => {
-  const input = roomInput.value.trim();
+  const inputRoom = roomInput.value.trim();
+  const inputName = usernameInput.value.trim();
 
-  if (!input) {
+  if (!inputRoom) {
     alert('Digite um código de sala.');
     return;
   }
-  if (input.length > 64) {
+  if (inputRoom.length > 64) {
     alert('Código da sala deve ter no máximo 64 caracteres.');
     return;
   }
-  if (!/^[\w-]{1,64}$/.test(input)) {
+  if (!/^[\w-]{1,64}$/.test(inputRoom)) {
     alert('Código da sala só pode conter letras, números, hífen e underline.');
     return;
   }
 
-  room = input;
+  if (!inputName) {
+    alert('Digite um nome de usuário.');
+    return;
+  }
+
+  room = inputRoom;
+  username = inputName;
+
   joinBtn.disabled = true;
   roomInput.disabled = true;
+  usernameInput.disabled = true;
+
   start();
 };
 
@@ -43,8 +54,8 @@ async function start() {
   ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'join', room }));
-    log('Conectado ao servidor de signaling na sala: ' + room);
+    ws.send(JSON.stringify({ type: 'join', room, username }));
+    log('Conectado à sala: ' + room);
   };
 
   ws.onmessage = async (event) => {
@@ -54,7 +65,7 @@ async function start() {
     } else if (event.data instanceof Blob) {
       dataStr = await event.data.text();
     } else {
-      console.warn('Mensagem WS inesperada:', event.data);
+      console.warn('Mensagem WebSocket inesperada:', event.data);
       return;
     }
 
@@ -67,10 +78,7 @@ async function start() {
 
     if (data.type === 'clientsCount') {
       isCaller = (data.count === 2);
-      console.log('isCaller:', isCaller);
-
       createPeerConnection();
-
       if (isCaller) {
         createOffer();
       }
@@ -96,12 +104,11 @@ async function start() {
       } catch (e) {
         console.error('Erro ao adicionar candidato ICE', e);
       }
-      return;
     }
   };
 
   ws.onclose = () => {
-    log('Conexão com signaling fechada');
+    log('🔌 Conexão com servidor finalizada.');
     msgInput.disabled = true;
     sendBtn.disabled = true;
   };
@@ -138,17 +145,19 @@ function createOffer() {
 
 function setupDataChannel() {
   dc.onopen = () => {
-    log('Conexão do chat aberta');
+    log('🟢 Conexão P2P estabelecida.');
     chat.style.display = 'block';
     msgInput.disabled = false;
     sendBtn.disabled = false;
     msgInput.focus();
   };
+
   dc.onmessage = (event) => {
     log('Parceiro: ' + event.data);
   };
+
   dc.onclose = () => {
-    log('Conexão do chat fechada');
+    log('🔴 Conexão P2P encerrada.');
     msgInput.disabled = true;
     sendBtn.disabled = true;
   };

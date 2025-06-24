@@ -17,27 +17,28 @@
 
 <body>
 
+<div class="container font1">
+    <h1>Chat WebRTC</h1>
 
-    <div class="container font1">
-        <h1>Chat WebRTC</h1>
+    <div id="chat" aria-live="polite" aria-atomic="true" role="log" style="display:none;"></div>
 
+    <input type="text" id="msg" placeholder="Digite sua mensagem..." disabled autocomplete="off"
+        aria-label="Mensagem para enviar" />
+    <button id="sendBtn" disabled class="font1">Enviar</button>
 
-        <div id="chat" aria-live="polite" aria-atomic="true" role="log" style="display:none;"></div>
+    <label for="usernameInput" class="font1" style="display:block; margin-top:1rem; margin-bottom:0.5rem;">
+        Nome de usuário:
+    </label>
+    <input type="text" id="usernameInput" placeholder="Escolha um nome" maxlength="64" autocomplete="off" />
 
-        <input type="text" id="msg" placeholder="Digite sua mensagem..." disabled autocomplete="off"
-            aria-label="Mensagem para enviar" />
-        <button id="sendBtn" disabled class="font1">Enviar</button>
+    <label for="roomInput" class="font1" style="display:block; margin-bottom:0.5rem;">
+        Código da sala:
+    </label>
+    <input type="text" id="roomInput" placeholder="Letras, números, - ou _ (max 64 chars)" maxlength="64"
+        autocomplete="off" />
 
-
-
-        <label for="roomInput" class="font1" style="display:block; margin-bottom:0.5rem;">
-            Código da sala:
-        </label>
-        <input type="text" id="roomInput" placeholder="Letras, números, - ou _ (max 64 chars)" maxlength="64"
-            autocomplete="off" />
-        <button id="joinBtn" class="font1">Entrar</button>
-    </div>
-
+    <button id="joinBtn" class="font1">Entrar</button>
+</div>
 
 
 </body>

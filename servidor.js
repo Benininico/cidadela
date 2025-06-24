@@ -70,7 +70,9 @@ wss.on('connection', (ws, req) => {
   const ip = req.socket.remoteAddress;
   ws.userIP = ip;
   ws.room = null;
+  ws.username = null;
   clients.push(ws);
+
   console.log(`${hora()}: 🟢 Cliente conectado com IP: ${ip}`);
 
   ws.on('message', (msg) => {
@@ -84,7 +86,10 @@ wss.on('connection', (ws, req) => {
 
     if (data.type === 'join' && typeof data.room === 'string') {
       ws.room = data.room.slice(0, 64);
-      console.log(`${hora()}: 🚪 Cliente com IP: ${ws.userIP} entrou na sala: ${ws.room}`);
+      ws.username = (typeof data.username === 'string') ? data.username.slice(0, 32) : 'desconhecido';
+
+      console.log(`${hora()}: 🚪 ${ws.username} (IP: ${ws.userIP}) entrou na sala: ${ws.room}`);
+
       const sameRoomClients = clients.filter(c => c.room === ws.room);
       ws.send(JSON.stringify({ type: 'clientsCount', count: sameRoomClients.length }));
     }
@@ -100,7 +105,7 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     clients = clients.filter(c => c !== ws);
-    console.log(`${hora()}: 🔴 Cliente com IP: ${ws.userIP} saiu da sala: ${ws.room || 'desconhecida'}`);
+    console.log(`${hora()}: 🔴 ${ws.username || 'Usuário'} (IP: ${ws.userIP}) saiu da sala: ${ws.room || 'desconhecida'}`);
   });
 });
 
