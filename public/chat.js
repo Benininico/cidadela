@@ -1,18 +1,19 @@
 const wsUrl = location.origin.replace(/^http/, 'ws');
 let ws, pc, dc;
 let isCaller = false;
-let room, username;
+let room;
+let username;
 
 const chat = document.getElementById('chat');
 const msgInput = document.getElementById('msg');
 const sendBtn = document.getElementById('sendBtn');
 const roomInput = document.getElementById('roomInput');
-const usernameInput = document.getElementById('usernameInput');
 const joinBtn = document.getElementById('joinBtn');
+const usernameInput = document.getElementById('usernameInput'); // novo campo username
 
 function log(text) {
   const p = document.createElement('p');
-  p.classList.add('chat-message');
+  p.classList.add('chat-message'); // para alinhar à esquerda via CSS
   p.textContent = text;
   chat.appendChild(p);
   chat.scrollTop = chat.scrollHeight;
@@ -20,7 +21,7 @@ function log(text) {
 
 joinBtn.onclick = () => {
   const inputRoom = roomInput.value.trim();
-  const inputName = usernameInput.value.trim();
+  const inputUser = usernameInput.value.trim();
 
   if (!inputRoom) {
     alert('Digite um código de sala.');
@@ -34,14 +35,17 @@ joinBtn.onclick = () => {
     alert('Código da sala só pode conter letras, números, hífen e underline.');
     return;
   }
-
-  if (!inputName) {
+  if (!inputUser) {
     alert('Digite um nome de usuário.');
+    return;
+  }
+  if (inputUser.length > 32) {
+    alert('Nome de usuário deve ter no máximo 32 caracteres.');
     return;
   }
 
   room = inputRoom;
-  username = inputName;
+  username = inputUser;
 
   joinBtn.disabled = true;
   roomInput.disabled = true;
@@ -55,7 +59,7 @@ async function start() {
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'join', room, username }));
-    log('Conectado à sala: ' + room);
+    log(`Conectado ao servidor de signaling na sala: ${room} como ${username}`);
   };
 
   ws.onmessage = async (event) => {
@@ -65,7 +69,7 @@ async function start() {
     } else if (event.data instanceof Blob) {
       dataStr = await event.data.text();
     } else {
-      console.warn('Mensagem WebSocket inesperada:', event.data);
+      console.warn('Mensagem WS inesperada:', event.data);
       return;
     }
 
@@ -78,7 +82,10 @@ async function start() {
 
     if (data.type === 'clientsCount') {
       isCaller = (data.count === 2);
+      console.log('isCaller:', isCaller);
+
       createPeerConnection();
+
       if (isCaller) {
         createOffer();
       }
@@ -104,11 +111,12 @@ async function start() {
       } catch (e) {
         console.error('Erro ao adicionar candidato ICE', e);
       }
+      return;
     }
   };
 
   ws.onclose = () => {
-    log('🔌 Conexão com servidor finalizada.');
+    log('Conexão com signaling fechada');
     msgInput.disabled = true;
     sendBtn.disabled = true;
   };
@@ -153,11 +161,16 @@ function setupDataChannel() {
   };
 
   dc.onmessage = (event) => {
-    log('Parceiro: ' + event.data);
+    try {
+      const { username: remoteUser, text } = JSON.parse(event.data);
+      log(remoteUser + ': ' + text);
+    } catch {
+      log('Parceiro: ' + event.data);
+    }
   };
 
   dc.onclose = () => {
-    log('🔴 Conexão P2P encerrada.');
+    log('🔴 Conexão do chat fechada');
     msgInput.disabled = true;
     sendBtn.disabled = true;
   };
@@ -166,8 +179,9 @@ function setupDataChannel() {
 sendBtn.onclick = () => {
   const text = msgInput.value.trim();
   if (text && dc && dc.readyState === 'open') {
-    dc.send(text);
-    log('Você: ' + text);
+    const payload = JSON.stringify({ username, text });
+    dc.send(payload);
+    log(username + ': ' + text);
     msgInput.value = '';
   }
 };
